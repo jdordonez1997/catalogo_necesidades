@@ -1212,6 +1212,9 @@ toggleHex.addEventListener('change', () => {
     // =========================
     initData();
     setHexOpacity(hexOpacity.value);
+    map.on('zoomend', () => {
+  updateHexLabelsVisibility();
+});
   </script>
 </body>
 </html>

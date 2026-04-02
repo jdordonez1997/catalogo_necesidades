@@ -440,8 +440,8 @@
       <div class="section">
         <div class="section-title">Resumen</div>
         <div class="status-box" id="statusBox">
-          <div><strong>Hexágonos cargados:</strong> 0</div>
-          <div><strong>Predios BSN cargados:</strong> 0</div>
+          <div><strong>Zonas visibles:</strong> 0</div>
+          <div><strong>Predios BSN visibles:</strong> 0</div>
           <div><strong>Provincia:</strong> (Todas)</div>
           <div><strong>Cantón:</strong> (Todos)</div>
           <div><strong>Rangos visibles:</strong> Todos</div>
@@ -622,8 +622,8 @@
       const totalBsn = bsnData?.features?.length || 0;
 
       statusBox.innerHTML = `
-        <div><strong>Hexágonos cargados:</strong> ${formatNumber(totalHex)}</div>
-        <div><strong>Predios BSN cargados:</strong> ${formatNumber(totalBsn)}</div>
+        <div><strong>Zonas visibles:</strong> ${formatNumber(totalHex)}</div>
+        <div><strong>Predios BSN visibles:</strong> ${formatNumber(totalBsn)}</div>
         <div><strong>Provincia:</strong> ${province || '(Todas)'}</div>
         <div><strong>Cantón:</strong> ${canton || '(Todos)'}</div>
         <div><strong>Rangos visibles:</strong> ${rangesLabel}</div>

@@ -319,23 +319,6 @@
       font-size: 11px;
     }
 
-    .hex-label {
-      background: rgba(255, 255, 255, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.98);
-      box-shadow: none;
-      color: #111111;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 1px 4px;
-      border-radius: 8px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .hex-label::before {
-      display: none;
-    }
-
     @media (max-width: 1280px) {
       #leftPanel {
         width: 320px;
@@ -517,8 +500,6 @@
       r6: '#993404'
     };
 
-    const HEX_LABEL_MIN_ZOOM = 11;
-
     const map = L.map('map', {
       zoomControl: true,
       preferCanvas: true
@@ -542,7 +523,6 @@
     let provinciasLayer = null;
     let cantonesLayer = null;
     let bsnLabelsLayer = null;
-    let hexLabelsLayer = null;
 
     let selectedProvinceLayer = null;
     let selectedCantonLayer = null;
@@ -800,52 +780,6 @@
       };
     }
 
-    function createHexLabelsLayer(filteredFeatures) {
-      if (hexLabelsLayer) {
-        map.removeLayer(hexLabelsLayer);
-      }
-
-      hexLabelsLayer = L.layerGroup();
-
-      filteredFeatures.forEach(feature => {
-        const tempLayer = L.geoJSON(feature);
-        const bounds = tempLayer.getBounds();
-        if (!bounds.isValid()) return;
-
-        const center = bounds.getCenter();
-        const value = safeNumber(feature.properties.NUMPOINTS);
-
-        const marker = L.marker(center, { opacity: 0 });
-
-        marker.bindTooltip(String(value), {
-          permanent: true,
-          direction: 'center',
-          className: 'hex-label',
-          offset: [0, 0]
-        });
-
-        hexLabelsLayer.addLayer(marker);
-      });
-
-      updateHexLabelsVisibility();
-    }
-
-    function updateHexLabelsVisibility() {
-      if (!hexLabelsLayer) return;
-
-      const shouldShow = toggleHex.checked && map.getZoom() >= HEX_LABEL_MIN_ZOOM;
-
-      if (shouldShow) {
-        if (!map.hasLayer(hexLabelsLayer)) {
-          hexLabelsLayer.addTo(map);
-        }
-      } else {
-        if (map.hasLayer(hexLabelsLayer)) {
-          map.removeLayer(hexLabelsLayer);
-        }
-      }
-    }
-
     function rebuildHexLayer() {
       if (hexLayer) {
         map.removeLayer(hexLayer);
@@ -875,7 +809,6 @@
         hexLayer.addTo(map);
       }
 
-      createHexLabelsLayer(filteredFeatures);
       updateStatusBox();
       setLegendVisibility();
     }
@@ -1099,7 +1032,6 @@
       } else {
         map.removeLayer(hexLayer);
       }
-      updateHexLabelsVisibility();
       setLegendVisibility();
     });
 
@@ -1198,10 +1130,6 @@
 
     hexOpacity.addEventListener('input', (e) => {
       setHexOpacity(e.target.value);
-    });
-
-    map.on('zoomend', () => {
-      updateHexLabelsVisibility();
     });
 
     // =========================

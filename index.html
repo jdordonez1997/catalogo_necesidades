@@ -912,6 +912,45 @@ const HEX_LABEL_MIN_ZOOM = 11;
       }
 
       createBSNLabelsLayer();
+      function createHexLabelsLayer() {
+  if (hexLabelsLayer) {
+    map.removeLayer(hexLabelsLayer);
+  }
+
+  hexLabelsLayer = L.layerGroup();
+
+  const filteredFeatures = (hexData?.features || []).filter(f => {
+    const num = safeNumber(f.properties.NUMPOINTS);
+    return matchesActiveRange(num);
+  });
+
+  filteredFeatures.forEach(feature => {
+    const geom = feature.geometry;
+    if (!geom) return;
+
+    const tempLayer = L.geoJSON(feature);
+    const bounds = tempLayer.getBounds();
+    if (!bounds.isValid()) return;
+
+    const center = bounds.getCenter();
+    const value = safeNumber(feature.properties.NUMPOINTS);
+
+    const marker = L.marker(center, {
+      opacity: 0
+    });
+
+    marker.bindTooltip(String(value), {
+      permanent: true,
+      direction: 'center',
+      className: 'hex-label',
+      offset: [0, 0]
+    });
+
+    hexLabelsLayer.addLayer(marker);
+  });
+
+  updateHexLabelsVisibility();
+}
       updateStatusBox();
     }
 

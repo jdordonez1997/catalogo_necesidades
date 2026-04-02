@@ -951,6 +951,21 @@ const HEX_LABEL_MIN_ZOOM = 11;
 
   updateHexLabelsVisibility();
 }
+      function updateHexLabelsVisibility() {
+  if (!hexLabelsLayer) return;
+
+  const shouldShow = toggleHex.checked && map.getZoom() >= HEX_LABEL_MIN_ZOOM;
+
+  if (shouldShow) {
+    if (!map.hasLayer(hexLabelsLayer)) {
+      hexLabelsLayer.addTo(map);
+    }
+  } else {
+    if (map.hasLayer(hexLabelsLayer)) {
+      map.removeLayer(hexLabelsLayer);
+    }
+  }
+}
       updateStatusBox();
     }
 

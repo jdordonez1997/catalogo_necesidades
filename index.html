@@ -581,11 +581,11 @@
     function getDensityLabel(num) {
       const n = safeNumber(num);
       if (n >= 5 && n < 20) return 'Baja';
-      if (n >= 20 && n < 50) return 'Media';
-      if (n >= 50 && n < 100) return 'Alta';
-      if (n >= 100 && n < 200) return 'Muy alta';
-      if (n >= 200 && n <= 500) return 'Crítica';
-      if (n > 500) return 'Extraordinaria';
+      if (n >= 20 && n < 50) return 'Media-Baja';
+      if (n >= 50 && n < 100) return 'Media';
+      if (n >= 100 && n < 200) return 'Media-Alta';
+      if (n >= 200 && n <= 500) return 'Alta';
+      if (n > 500) return 'Muy Alta';
       return 'Sin clasificación';
     }
 

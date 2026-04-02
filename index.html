@@ -1097,15 +1097,18 @@ setLegendVisibility();
     // =========================
     // EVENTOS UI
     // =========================
-    toggleHex.addEventListener('change', () => {
-      if (!hexLayer) return;
-      if (toggleHex.checked) {
-        hexLayer.addTo(map);
-      } else {
-        map.removeLayer(hexLayer);
-      }
-      setLegendVisibility();
-    });
+toggleHex.addEventListener('change', () => {
+  if (!hexLayer) return;
+
+  if (toggleHex.checked) {
+    hexLayer.addTo(map);
+  } else {
+    map.removeLayer(hexLayer);
+  }
+
+  updateHexLabelsVisibility();
+  setLegendVisibility();
+});
 
     toggleBSN.addEventListener('change', () => {
       if (!bsnLayer) return;

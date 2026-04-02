@@ -822,12 +822,13 @@ const HEX_LABEL_MIN_ZOOM = 11;
         }
       );
 
-      if (toggleHex.checked) {
-        hexLayer.addTo(map);
-      }
+     if (toggleHex.checked) {
+  hexLayer.addTo(map);
+}
 
-      updateStatusBox();
-      setLegendVisibility();
+createHexLabelsLayer();
+updateStatusBox();
+setLegendVisibility();
     }
 
     function setHexOpacity(value) {

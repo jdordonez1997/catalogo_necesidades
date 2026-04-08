@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CATÁLOGO DE NECESIDADES DE VIVIENDA</title>
 
-  <!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     :root{
@@ -122,6 +121,21 @@
       font-weight: 700;
       margin-bottom: 10px;
       color: #111827;
+    }
+
+    .layer-group-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #6b0f1a;
+      margin: 12px 0 6px 0;
+      padding-top: 8px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .layer-group-title:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
     }
 
     .field {
@@ -351,6 +365,8 @@
       <div class="section">
         <div class="section-title">Capas del catálogo</div>
 
+        <div class="layer-group-title">Primer Segmento</div>
+
         <div class="check-row">
           <input type="checkbox" id="toggleHex" checked>
           <label for="toggleHex">Zonas de Concentración de Hogares con Necesidad de Vivienda</label>
@@ -362,6 +378,20 @@
         </div>
 
         <div class="check-row">
+          <input type="checkbox" id="toggleBSNLabels">
+          <label for="toggleBSNLabels">Etiquetas de predios BSN</label>
+        </div>
+
+        <div class="layer-group-title">Segundo Segmento</div>
+
+        <div class="check-row">
+          <input type="checkbox" id="toggleDisponibles" checked>
+          <label for="toggleDisponibles">Viviendas Disponibles</label>
+        </div>
+
+        <div class="layer-group-title">Información Base</div>
+
+        <div class="check-row">
           <input type="checkbox" id="toggleProvLayer">
           <label for="toggleProvLayer">Capa de provincias</label>
         </div>
@@ -369,11 +399,6 @@
         <div class="check-row">
           <input type="checkbox" id="toggleCantLayer">
           <label for="toggleCantLayer">Capa de cantones</label>
-        </div>
-
-        <div class="check-row">
-          <input type="checkbox" id="toggleBSNLabels">
-          <label for="toggleBSNLabels">Etiquetas de predios BSN</label>
         </div>
       </div>
 
@@ -442,6 +467,7 @@
         <div class="status-box" id="statusBox">
           <div><strong>Zonas visibles:</strong> 0</div>
           <div><strong>Predios BSN visibles:</strong> 0</div>
+          <div><strong>Viviendas disponibles:</strong> 0</div>
           <div><strong>Provincia:</strong> (Todas)</div>
           <div><strong>Cantón:</strong> (Todos)</div>
           <div><strong>Rangos visibles:</strong> Todos</div>
@@ -475,20 +501,18 @@
     <aside id="rightPanel">
       <h2 class="detail-title">Ficha de atributos</h2>
       <div id="detailContent" class="detail-empty">
-        Haga clic en una zona de concentración de hogares con necesidad de vivienda o en un predio del Banco de Suelo Nacional para consultar sus atributos.
+        Haga clic en una zona de concentración de hogares con necesidad de vivienda, en un predio del Banco de Suelo Nacional o en una vivienda disponible para consultar sus atributos.
       </div>
     </aside>
   </div>
 
   <script>
-    // =========================
-    // CONFIGURACIÓN GENERAL
-    // =========================
     const FILES = {
       hex: '5K_Hexagonos.geojson',
       bsn: 'Bsn_SolicitudVivienda.geojson',
       provincias: 'Provincias.geojson',
-      cantones: 'Cantones.geojson'
+      cantones: 'Cantones.geojson',
+      disponibles: '2B_DISPONIBLES.geojson'
     };
 
     const HEX_COLORS = {
@@ -510,18 +534,17 @@
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // =========================
-    // VARIABLES DE ESTADO
-    // =========================
     let hexData = null;
     let bsnData = null;
     let provinciasData = null;
     let cantonesData = null;
+    let disponiblesData = null;
 
     let hexLayer = null;
     let bsnLayer = null;
     let provinciasLayer = null;
     let cantonesLayer = null;
+    let disponiblesLayer = null;
     let bsnLabelsLayer = null;
 
     let selectedProvinceLayer = null;
@@ -529,14 +552,12 @@
 
     let currentHexOpacity = 0.8;
 
-    // =========================
-    // ELEMENTOS DEL DOM
-    // =========================
     const toggleHex = document.getElementById('toggleHex');
     const toggleBSN = document.getElementById('toggleBSN');
     const toggleProvLayer = document.getElementById('toggleProvLayer');
     const toggleCantLayer = document.getElementById('toggleCantLayer');
     const toggleBSNLabels = document.getElementById('toggleBSNLabels');
+    const toggleDisponibles = document.getElementById('toggleDisponibles');
 
     const provinciaSelect = document.getElementById('provinciaSelect');
     const cantonSelect = document.getElementById('cantonSelect');
@@ -550,9 +571,6 @@
 
     const hexRangeChecks = Array.from(document.querySelectorAll('.hex-range-filter'));
 
-    // =========================
-    // UTILIDADES
-    // =========================
     function safeNumber(value) {
       const num = Number(value);
       return Number.isFinite(num) ? num : 0;
@@ -620,12 +638,14 @@
 
       const totalHex = hexData?.features?.length || 0;
       const totalBsn = bsnData?.features?.length || 0;
+      const totalDisponibles = disponiblesData?.features?.length || 0;
 
       statusBox.innerHTML = `
         <div><strong>Zonas visibles:</strong> ${formatNumber(totalHex)}</div>
         <div><strong>Predios BSN visibles:</strong> ${formatNumber(totalBsn)}</div>
-        <div><strong>Provincia:</strong> ${province || '(Todas)'}</div>
-        <div><strong>Cantón:</strong> ${canton || '(Todos)'}</div>
+        <div><strong>Viviendas disponibles:</strong> ${formatNumber(totalDisponibles)}</div>
+        <div><strong>Provincia:</strong> ${province}</div>
+        <div><strong>Cantón:</strong> ${canton}</div>
         <div><strong>Rangos visibles:</strong> ${rangesLabel}</div>
       `;
     }
@@ -633,7 +653,7 @@
     function setDetailEmpty() {
       detailContent.className = 'detail-empty';
       detailContent.innerHTML = `
-        Haga clic en una zona de concentración de beneficiarios o en un predio del Banco de Suelo Nacional para consultar sus atributos.
+        Haga clic en una zona de concentración de hogares con necesidad de vivienda, en un predio del Banco de Suelo Nacional o en una vivienda disponible para consultar sus atributos.
       `;
     }
 
@@ -690,6 +710,30 @@
       `;
     }
 
+    function showDisponiblesDetails(props) {
+      detailContent.className = '';
+      detailContent.innerHTML = `
+        <div class="detail-group">
+          <div class="detail-group-title">Viviendas Disponibles</div>
+
+          <div class="detail-item">
+            <span class="detail-label">PROMOTOR / CONSTRUCTOR:</span>
+            <span class="detail-value">${formatText(props['PROMOTOR/ CONSTRUCTOR'])}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">NOMBRE DEL PROYECTO:</span>
+            <span class="detail-value">${formatText(props['NOMBRE DEL PROYECTO'])}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">VIVIENDAS DISPONIBLES:</span>
+            <span class="detail-value">${formatText(props['VIVIENDAS DISPONIBLES'])}</span>
+          </div>
+        </div>
+      `;
+    }
+
     function zoomToLayer(layer) {
       if (layer && layer.getBounds && layer.getBounds().isValid()) {
         map.fitBounds(layer.getBounds(), { padding: [20, 20] });
@@ -725,9 +769,6 @@
       };
     }
 
-    // =========================
-    // CARGA DE DATOS
-    // =========================
     async function loadGeoJSON(path) {
       const res = await fetch(path);
       if (!res.ok) throw new Error(`No se pudo cargar ${path}`);
@@ -736,17 +777,19 @@
 
     async function initData() {
       try {
-        const [hex, bsn, provincias, cantones] = await Promise.all([
+        const [hex, bsn, provincias, cantones, disponibles] = await Promise.all([
           loadGeoJSON(FILES.hex),
           loadGeoJSON(FILES.bsn),
           loadGeoJSON(FILES.provincias),
-          loadGeoJSON(FILES.cantones)
+          loadGeoJSON(FILES.cantones),
+          loadGeoJSON(FILES.disponibles)
         ]);
 
         hexData = hex;
         bsnData = bsn;
         provinciasData = provincias;
         cantonesData = cantones;
+        disponiblesData = disponibles;
 
         createProvinceLayer();
         createCantonLayer();
@@ -754,6 +797,7 @@
         populateCantonSelect();
         rebuildHexLayer();
         rebuildBSNLayer();
+        rebuildDisponiblesLayer();
         updateStatusBox();
         setLegendVisibility();
       } catch (error) {
@@ -763,9 +807,6 @@
       }
     }
 
-    // =========================
-    // CAPA HEXÁGONOS
-    // =========================
     function getHexStyle(feature) {
       const num = safeNumber(feature.properties.NUMPOINTS);
       const cat = getHexCategory(num);
@@ -828,9 +869,6 @@
       legendHex.style.display = toggleHex.checked ? 'block' : 'none';
     }
 
-    // =========================
-    // CAPA BSN
-    // =========================
     function createBSNLabelsLayer() {
       if (bsnLabelsLayer) {
         map.removeLayer(bsnLabelsLayer);
@@ -839,9 +877,6 @@
       bsnLabelsLayer = L.layerGroup();
 
       (bsnData?.features || []).forEach(feature => {
-        const geom = feature.geometry;
-        if (!geom) return;
-
         const tempLayer = L.geoJSON(feature);
         const bounds = tempLayer.getBounds();
         if (!bounds.isValid()) return;
@@ -898,9 +933,36 @@
       updateStatusBox();
     }
 
-    // =========================
-    // CAPAS PROVINCIAS Y CANTONES
-    // =========================
+    function rebuildDisponiblesLayer() {
+      if (disponiblesLayer) {
+        map.removeLayer(disponiblesLayer);
+      }
+
+      disponiblesLayer = L.geoJSON(disponiblesData, {
+        pointToLayer: (feature, latlng) => {
+          return L.circleMarker(latlng, {
+            radius: 7,
+            color: '#005bbb',
+            weight: 1.5,
+            opacity: 1,
+            fillColor: '#3b82f6',
+            fillOpacity: 0.85
+          });
+        },
+        onEachFeature: (feature, layer) => {
+          layer.on('click', () => {
+            showDisponiblesDetails(feature.properties);
+          });
+        }
+      });
+
+      if (toggleDisponibles.checked) {
+        disponiblesLayer.addTo(map);
+      }
+
+      updateStatusBox();
+    }
+
     function createProvinceLayer() {
       if (provinciasLayer) {
         map.removeLayer(provinciasLayer);
@@ -1022,9 +1084,6 @@
       zoomToLayer(selectedCantonLayer);
     }
 
-    // =========================
-    // EVENTOS UI
-    // =========================
     toggleHex.addEventListener('change', () => {
       if (!hexLayer) return;
       if (toggleHex.checked) {
@@ -1048,6 +1107,15 @@
         if (bsnLabelsLayer) {
           map.removeLayer(bsnLabelsLayer);
         }
+      }
+    });
+
+    toggleDisponibles.addEventListener('change', () => {
+      if (!disponiblesLayer) return;
+      if (toggleDisponibles.checked) {
+        disponiblesLayer.addTo(map);
+      } else {
+        map.removeLayer(disponiblesLayer);
       }
     });
 
@@ -1132,9 +1200,6 @@
       setHexOpacity(e.target.value);
     });
 
-    // =========================
-    // INICIO
-    // =========================
     initData();
     setHexOpacity(hexOpacity.value);
   </script>

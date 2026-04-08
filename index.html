@@ -353,7 +353,7 @@
 
         <div class="check-row">
           <input type="checkbox" id="toggleHex" checked>
-          <label for="toggleHex">Zonas de Concentración de Beneficiarios</label>
+          <label for="toggleHex">Zonas de Concentración de Hogares con Necesidad de Vivienda</label>
         </div>
 
         <div class="check-row">
@@ -398,7 +398,7 @@
       </div>
 
       <div class="section">
-        <div class="section-title">Filtro por densidad de beneficiarios</div>
+        <div class="section-title">Filtro por densidad de hogares con necesidad de vivienda</div>
         <div class="range-grid">
           <div class="check-row">
             <input type="checkbox" class="hex-range-filter" id="r1" value="5-20" checked>
@@ -457,7 +457,7 @@
       <div id="map"></div>
 
       <div id="legendHex" class="legend-horizontal">
-        <div class="legend-title">Densidad de beneficiarios</div>
+        <div class="legend-title">Densidad de hogares con necesidad de vivienda</div>
         <div class="legend-bar">
           <div></div><div></div><div></div><div></div><div></div><div></div>
         </div>
@@ -475,7 +475,7 @@
     <aside id="rightPanel">
       <h2 class="detail-title">Ficha de atributos</h2>
       <div id="detailContent" class="detail-empty">
-        Haga clic en una zona de concentración de beneficiarios o en un predio del Banco de Suelo Nacional para consultar sus atributos.
+        Haga clic en una zona de concentración de hogares con necesidad de vivienda o en un predio del Banco de Suelo Nacional para consultar sus atributos.
       </div>
     </aside>
   </div>
@@ -641,7 +641,7 @@
       detailContent.className = '';
       detailContent.innerHTML = `
         <div class="detail-group">
-          <div class="detail-group-title">Zona de concentración de beneficiarios</div>
+          <div class="detail-group-title">Zona de concentración de hogares con necesidad de vivienda</div>
 
           <div class="detail-item">
             <span class="detail-label">CÓDIGO ÚNICO DE ZONA:</span>
@@ -649,7 +649,7 @@
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">POTENCIALES BENEFICIARIOS:</span>
+            <span class="detail-label">HOGARES CON NECESIDAD DE VIVIENDA:</span>
             <span class="detail-value">${formatNumber(props.NUMPOINTS)}</span>
           </div>
 

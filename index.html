@@ -24,6 +24,12 @@
       --hex-4: #e57217;
       --hex-5: #c4510b;
       --hex-6: #993404;
+      --hex1b-1: #d7e6f5;
+      --hex1b-2: #afd1e7;
+      --hex1b-3: #73b2d8;
+      --hex1b-4: #3e8ec4;
+      --hex1b-5: #1663aa;
+      --hex1b-6: #08306b;
     }
 
     html, body {
@@ -281,6 +287,10 @@
       display: none;
     }
 
+    .legend-secondary {
+      bottom: 118px;
+    }
+
     .legend-title {
       font-size: 13px;
       font-weight: 800;
@@ -305,6 +315,13 @@
     .legend-bar div:nth-child(5){ background: var(--hex-5); }
     .legend-bar div:nth-child(6){ background: var(--hex-6); }
 
+    .legend-bar-1b div:nth-child(1){ background: var(--hex1b-1); }
+    .legend-bar-1b div:nth-child(2){ background: var(--hex1b-2); }
+    .legend-bar-1b div:nth-child(3){ background: var(--hex1b-3); }
+    .legend-bar-1b div:nth-child(4){ background: var(--hex1b-4); }
+    .legend-bar-1b div:nth-child(5){ background: var(--hex1b-5); }
+    .legend-bar-1b div:nth-child(6){ background: var(--hex1b-6); }
+
     .legend-labels {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
@@ -313,13 +330,6 @@
       font-size: 11px;
       color: #374151;
       text-align: center;
-    }
-
-    .mini-note {
-      font-size: 12px;
-      color: #6b7280;
-      margin-top: 6px;
-      line-height: 1.35;
     }
 
     .transparency-value {
@@ -373,6 +383,11 @@
         </div>
 
         <div class="check-row">
+          <input type="checkbox" id="toggleHex1B" checked>
+          <label for="toggleHex1B">Zonas de Concentración de Hogares con Necesidad de Vivienda en Terrenos Urbanizados por el Estado</label>
+        </div>
+
+        <div class="check-row">
           <input type="checkbox" id="toggleBSN" checked>
           <label for="toggleBSN">Predios Banco de Suelo Nacional</label>
         </div>
@@ -385,8 +400,8 @@
         <div class="layer-group-title">Segundo Segmento</div>
 
         <div class="check-row">
-          <input type="checkbox" id="toggleDisponibles" checked>
-          <label for="toggleDisponibles">Viviendas Disponibles</label>
+          <input type="checkbox" id="toggleSubsidio2B" checked>
+          <label for="toggleSubsidio2B">Beneficiarios de Subsidio Parcial del Estado</label>
         </div>
 
         <div class="layer-group-title">Información Base</div>
@@ -467,7 +482,7 @@
         <div class="status-box" id="statusBox">
           <div><strong>Zonas visibles:</strong> 0</div>
           <div><strong>Predios BSN visibles:</strong> 0</div>
-          <div><strong>Viviendas disponibles:</strong> 0</div>
+          <div><strong>Beneficiarios 2B visibles:</strong> 0</div>
           <div><strong>Provincia:</strong> (Todas)</div>
           <div><strong>Cantón:</strong> (Todos)</div>
           <div><strong>Rangos visibles:</strong> Todos</div>
@@ -483,8 +498,23 @@
       <div id="map"></div>
 
       <div id="legendHex" class="legend-horizontal">
-        <div class="legend-title">Densidad de hogares con necesidad de vivienda</div>
+        <div class="legend-title">Densidad de hogares con necesidad de vivienda en terreno propio</div>
         <div class="legend-bar">
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
+        <div class="legend-labels">
+          <span>5 - 20</span>
+          <span>20 - 50</span>
+          <span>50 - 100</span>
+          <span>100 - 200</span>
+          <span>200 - 500</span>
+          <span>&gt; 500</span>
+        </div>
+      </div>
+
+      <div id="legendHex1B" class="legend-horizontal legend-secondary">
+        <div class="legend-title">Densidad de hogares con necesidad de vivienda en terrenos urbanizados por el Estado</div>
+        <div class="legend-bar legend-bar-1b">
           <div></div><div></div><div></div><div></div><div></div><div></div>
         </div>
         <div class="legend-labels">
@@ -501,7 +531,7 @@
     <aside id="rightPanel">
       <h2 class="detail-title">Ficha de atributos</h2>
       <div id="detailContent" class="detail-empty">
-        Haga clic en una zona de concentración, en un predio del Banco de Suelo Nacional o en una vivienda disponible para consultar sus atributos.
+        Haga clic en una zona de concentración, en un predio del Banco de Suelo Nacional o en un beneficiario de subsidio parcial del Estado para consultar sus atributos.
       </div>
     </aside>
   </div>
@@ -509,10 +539,11 @@
   <script>
     const FILES = {
       hex: '5K_Hexagonos.geojson',
+      hex1B: '5K_Hexagonos_1B.geojson',
       bsn: 'Bsn_SolicitudVivienda.geojson',
       provincias: 'Provincias.geojson',
       cantones: 'Cantones.geojson',
-      disponibles: '2B_DISPONIBLES.geojson'
+      subsidio2B: 'Subsidio_2B.geojson'
     };
 
     const HEX_COLORS = {
@@ -522,6 +553,15 @@
       r4: '#e57217',
       r5: '#c4510b',
       r6: '#993404'
+    };
+
+    const HEX1B_COLORS = {
+      r1: '#d7e6f5',
+      r2: '#afd1e7',
+      r3: '#73b2d8',
+      r4: '#3e8ec4',
+      r5: '#1663aa',
+      r6: '#08306b'
     };
 
     const map = L.map('map', {
@@ -535,16 +575,18 @@
     }).addTo(map);
 
     let hexData = null;
+    let hex1BData = null;
     let bsnData = null;
     let provinciasData = null;
     let cantonesData = null;
-    let disponiblesData = null;
+    let subsidio2BData = null;
 
     let hexLayer = null;
+    let hex1BLayer = null;
     let bsnLayer = null;
     let provinciasLayer = null;
     let cantonesLayer = null;
-    let disponiblesLayer = null;
+    let subsidio2BLayer = null;
     let bsnLabelsLayer = null;
 
     let selectedProvinceLayer = null;
@@ -553,11 +595,12 @@
     let currentHexOpacity = 0.8;
 
     const toggleHex = document.getElementById('toggleHex');
+    const toggleHex1B = document.getElementById('toggleHex1B');
     const toggleBSN = document.getElementById('toggleBSN');
     const toggleProvLayer = document.getElementById('toggleProvLayer');
     const toggleCantLayer = document.getElementById('toggleCantLayer');
     const toggleBSNLabels = document.getElementById('toggleBSNLabels');
-    const toggleDisponibles = document.getElementById('toggleDisponibles');
+    const toggleSubsidio2B = document.getElementById('toggleSubsidio2B');
 
     const provinciaSelect = document.getElementById('provinciaSelect');
     const cantonSelect = document.getElementById('cantonSelect');
@@ -568,6 +611,7 @@
     const statusBox = document.getElementById('statusBox');
     const detailContent = document.getElementById('detailContent');
     const legendHex = document.getElementById('legendHex');
+    const legendHex1B = document.getElementById('legendHex1B');
 
     const hexRangeChecks = Array.from(document.querySelectorAll('.hex-range-filter'));
 
@@ -638,12 +682,12 @@
 
       const totalHex = hexData?.features?.length || 0;
       const totalBsn = bsnData?.features?.length || 0;
-      const totalDisponibles = disponiblesData?.features?.length || 0;
+      const totalSubsidio2B = subsidio2BData?.features?.length || 0;
 
       statusBox.innerHTML = `
         <div><strong>Zonas visibles:</strong> ${formatNumber(totalHex)}</div>
         <div><strong>Predios BSN visibles:</strong> ${formatNumber(totalBsn)}</div>
-        <div><strong>Viviendas disponibles:</strong> ${formatNumber(totalDisponibles)}</div>
+        <div><strong>Beneficiarios 2B visibles:</strong> ${formatNumber(totalSubsidio2B)}</div>
         <div><strong>Provincia:</strong> ${province}</div>
         <div><strong>Cantón:</strong> ${canton}</div>
         <div><strong>Rangos visibles:</strong> ${rangesLabel}</div>
@@ -653,7 +697,7 @@
     function setDetailEmpty() {
       detailContent.className = 'detail-empty';
       detailContent.innerHTML = `
-        Haga clic en una zona de concentración, en un predio del Banco de Suelo Nacional o en una vivienda disponible para consultar sus atributos.
+        Haga clic en una zona de concentración, en un predio del Banco de Suelo Nacional o en un beneficiario de subsidio parcial del Estado para consultar sus atributos.
       `;
     }
 
@@ -670,6 +714,30 @@
 
           <div class="detail-item">
             <span class="detail-label">HOGARES CON NECESIDAD DE VIVIENDA:</span>
+            <span class="detail-value">${formatNumber(props.NUMPOINTS)}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">DENSIDAD:</span>
+            <span class="detail-value">${getDensityLabel(props.NUMPOINTS)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function showHex1BDetails(props) {
+      detailContent.className = '';
+      detailContent.innerHTML = `
+        <div class="detail-group">
+          <div class="detail-group-title">Zona de concentración de hogares con necesidad de vivienda en terrenos urbanizados por el Estado</div>
+
+          <div class="detail-item">
+            <span class="detail-label">CÓDIGO ÚNICO DE ZONA:</span>
+            <span class="detail-value">${formatText(props.id)}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">HOGARES CON NECESIDAD DE VIVIENDA EN TERRENO URBANIZADO POR EL ESTADO:</span>
             <span class="detail-value">${formatNumber(props.NUMPOINTS)}</span>
           </div>
 
@@ -710,25 +778,20 @@
       `;
     }
 
-    function showDisponiblesDetails(props) {
+    function showSubsidio2BDetails(props) {
       detailContent.className = '';
       detailContent.innerHTML = `
         <div class="detail-group">
-          <div class="detail-group-title">Viviendas Disponibles</div>
+          <div class="detail-group-title">Beneficiarios de Subsidio Parcial del Estado</div>
 
           <div class="detail-item">
-            <span class="detail-label">PROMOTOR / CONSTRUCTOR:</span>
-            <span class="detail-value">${formatText(props['PROMOTOR/ CONSTRUCTOR'])}</span>
+            <span class="detail-label">NOMBRE DE PROYECTO:</span>
+            <span class="detail-value">${formatText(props.PROYECTOS)}</span>
           </div>
 
           <div class="detail-item">
-            <span class="detail-label">NOMBRE DEL PROYECTO:</span>
-            <span class="detail-value">${formatText(props['NOMBRE DEL PROYECTO'])}</span>
-          </div>
-
-          <div class="detail-item">
-            <span class="detail-label">VIVIENDAS DISPONIBLES:</span>
-            <span class="detail-value">${formatText(props['VIVIENDAS DISPONIBLES'])}</span>
+            <span class="detail-label">BENEFICIARIOS PENDIENTES DE RECIBIR SUBSIDIO PARCIAL - 2B:</span>
+            <span class="detail-value">${formatText(props.BENEFICIARIOS)}</span>
           </div>
         </div>
       `;
@@ -777,27 +840,30 @@
 
     async function initData() {
       try {
-        const [hex, bsn, provincias, cantones, disponibles] = await Promise.all([
+        const [hex, hex1B, bsn, provincias, cantones, subsidio2B] = await Promise.all([
           loadGeoJSON(FILES.hex),
+          loadGeoJSON(FILES.hex1B),
           loadGeoJSON(FILES.bsn),
           loadGeoJSON(FILES.provincias),
           loadGeoJSON(FILES.cantones),
-          loadGeoJSON(FILES.disponibles)
+          loadGeoJSON(FILES.subsidio2B)
         ]);
 
         hexData = hex;
+        hex1BData = hex1B;
         bsnData = bsn;
         provinciasData = provincias;
         cantonesData = cantones;
-        disponiblesData = disponibles;
+        subsidio2BData = subsidio2B;
 
         createProvinceLayer();
         createCantonLayer();
         populateProvinceSelect();
         populateCantonSelect();
         rebuildHexLayer();
+        rebuildHex1BLayer();
         rebuildBSNLayer();
-        rebuildDisponiblesLayer();
+        rebuildSubsidio2BLayer();
         updateStatusBox();
         setLegendVisibility();
       } catch (error) {
@@ -814,6 +880,20 @@
 
       return {
         color: '#8b8b8b',
+        weight: 0.7,
+        opacity: 0.45,
+        fillColor: color,
+        fillOpacity: currentHexOpacity
+      };
+    }
+
+    function getHex1BStyle(feature) {
+      const num = safeNumber(feature.properties.NUMPOINTS);
+      const cat = getHexCategory(num);
+      const color = cat ? HEX1B_COLORS[cat] : '#cccccc';
+
+      return {
+        color: '#6f7f91',
         weight: 0.7,
         opacity: 0.45,
         fillColor: color,
@@ -854,19 +934,55 @@
       setLegendVisibility();
     }
 
+    function rebuildHex1BLayer() {
+      if (hex1BLayer) {
+        map.removeLayer(hex1BLayer);
+      }
+
+      const filteredFeatures = (hex1BData?.features || []).filter(f => {
+        const num = safeNumber(f.properties.NUMPOINTS);
+        return matchesActiveRange(num);
+      });
+
+      hex1BLayer = L.geoJSON(
+        {
+          type: 'FeatureCollection',
+          features: filteredFeatures
+        },
+        {
+          style: getHex1BStyle,
+          onEachFeature: (feature, layer) => {
+            layer.on('click', () => {
+              showHex1BDetails(feature.properties);
+            });
+          }
+        }
+      );
+
+      if (toggleHex1B.checked) {
+        hex1BLayer.addTo(map);
+      }
+
+      updateStatusBox();
+      setLegendVisibility();
+    }
+
     function setHexOpacity(value) {
       currentHexOpacity = value / 100;
       hexOpacityValue.textContent = `${value}%`;
 
       if (hexLayer) {
-        hexLayer.setStyle({
-          fillOpacity: currentHexOpacity
-        });
+        hexLayer.setStyle({ fillOpacity: currentHexOpacity });
+      }
+
+      if (hex1BLayer) {
+        hex1BLayer.setStyle({ fillOpacity: currentHexOpacity });
       }
     }
 
     function setLegendVisibility() {
       legendHex.style.display = toggleHex.checked ? 'block' : 'none';
+      legendHex1B.style.display = toggleHex1B.checked ? 'block' : 'none';
     }
 
     function createBSNLabelsLayer() {
@@ -933,12 +1049,12 @@
       updateStatusBox();
     }
 
-    function rebuildDisponiblesLayer() {
-      if (disponiblesLayer) {
-        map.removeLayer(disponiblesLayer);
+    function rebuildSubsidio2BLayer() {
+      if (subsidio2BLayer) {
+        map.removeLayer(subsidio2BLayer);
       }
 
-      disponiblesLayer = L.geoJSON(disponiblesData, {
+      subsidio2BLayer = L.geoJSON(subsidio2BData, {
         pointToLayer: (feature, latlng) => {
           return L.circleMarker(latlng, {
             radius: 7,
@@ -951,13 +1067,13 @@
         },
         onEachFeature: (feature, layer) => {
           layer.on('click', () => {
-            showDisponiblesDetails(feature.properties);
+            showSubsidio2BDetails(feature.properties);
           });
         }
       });
 
-      if (toggleDisponibles.checked) {
-        disponiblesLayer.addTo(map);
+      if (toggleSubsidio2B.checked) {
+        subsidio2BLayer.addTo(map);
       }
 
       updateStatusBox();
@@ -1094,6 +1210,16 @@
       setLegendVisibility();
     });
 
+    toggleHex1B.addEventListener('change', () => {
+      if (!hex1BLayer) return;
+      if (toggleHex1B.checked) {
+        hex1BLayer.addTo(map);
+      } else {
+        map.removeLayer(hex1BLayer);
+      }
+      setLegendVisibility();
+    });
+
     toggleBSN.addEventListener('change', () => {
       if (!bsnLayer) return;
 
@@ -1110,12 +1236,12 @@
       }
     });
 
-    toggleDisponibles.addEventListener('change', () => {
-      if (!disponiblesLayer) return;
-      if (toggleDisponibles.checked) {
-        disponiblesLayer.addTo(map);
+    toggleSubsidio2B.addEventListener('change', () => {
+      if (!subsidio2BLayer) return;
+      if (toggleSubsidio2B.checked) {
+        subsidio2BLayer.addTo(map);
       } else {
-        map.removeLayer(disponiblesLayer);
+        map.removeLayer(subsidio2BLayer);
       }
     });
 
@@ -1193,6 +1319,7 @@
     hexRangeChecks.forEach(chk => {
       chk.addEventListener('change', () => {
         rebuildHexLayer();
+        rebuildHex1BLayer();
       });
     });
 

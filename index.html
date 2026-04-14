@@ -791,7 +791,18 @@
 
           <div class="detail-item">
             <span class="detail-label">BENEFICIARIOS PENDIENTES DE RECIBIR SUBSIDIO PARCIAL - 2B:</span>
-            <span class="detail-value">${formatText(props.BENEFICIARIOS)}</span>
+            <div class="detail-value">
+  <ul style="margin: 6px 0 0 18px; padding: 0;">
+    ${
+      (props.BENEFICIARIOS || '')
+        .split(';')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => `<li>${item}</li>`)
+        .join('')
+    }
+  </ul>
+</div>
           </div>
         </div>
       `;
